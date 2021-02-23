@@ -67,7 +67,7 @@ def make_attrgetter(environment, attribute, postprocess=None, default=None):
         for part in attribute:
             item = environment.getitem(item, part)
 
-            if default and isinstance(item, Undefined):
+            if default is not None and isinstance(item, Undefined):
                 item = default
 
         if postprocess is not None:
@@ -971,7 +971,7 @@ _GroupTuple.__str__ = tuple.__str__  # type: ignore
 
 
 @environmentfilter
-def do_groupby(environment, value, attribute):
+def do_groupby(environment, value, attribute, postprocess=None, default=None):
     """Group a sequence of objects by an attribute using Python's
     :func:`itertools.groupby`. The attribute can use dot notation for
     nested access, like ``"address.city"``. Unlike Python's ``groupby``,
@@ -1002,10 +1002,16 @@ def do_groupby(environment, value, attribute):
           <li>{{ group.grouper }}: {{ group.list|join(", ") }}
         {% endfor %}</ul>
 
+    .. versionchanged:: 2.12
+       The `default` parameter was added to allow groupby attribute that may be
+       undefined.
+
+       The `postprocess` parameter was added to allow customize the groupby key.
+
     .. versionchanged:: 2.6
         The attribute supports dot notation for nested access.
     """
-    expr = make_attrgetter(environment, attribute)
+    expr = make_attrgetter(environment, attribute, postprocess, default)
     return [
         _GroupTuple(key, list(values))
         for key, values in groupby(sorted(value, key=expr), expr)
